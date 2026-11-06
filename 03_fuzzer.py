@@ -106,6 +106,9 @@ def build_session():
     for _k, _v in (getattr(config, "EXTRA_COOKIES", {}) or {}).items():
         s.cookies.set(_k, _v)
     s.verify = config.VERIFY_TLS
+    if not config.VERIFY_TLS:
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     if config.PROXY:
         s.proxies = {"http": config.PROXY, "https": config.PROXY}
     return s
