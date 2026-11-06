@@ -24,6 +24,25 @@ from urllib.parse import urljoin, urlparse, urldefrag
 import requests
 from bs4 import BeautifulSoup
 
+
+def _bs_parser():
+    """Берём lxml, если установлен, иначе встроенный html.parser (без доп. зависимостей)."""
+    for p in ("lxml", "html.parser"):
+        try:
+            BeautifulSoup("", p)
+            return p
+        except Exception:
+            continue
+    return "html.parser"
+
+
+BS_PARSER = _bs_parser()
+
+
+def make_soup(markup):
+    return BeautifulSoup(markup, BS_PARSER)
+
+
 try:
     import config
 except ImportError:
@@ -116,7 +135,7 @@ def fetch(session, url, method="GET"):
 def extract_from_html(base_url, html):
     """Ссылки, формы и подключённые скрипты со страницы."""
     found, scripts = set(), set()
-    soup = BeautifulSoup(html, "lxml")
+    soup = make_soup(html)
     for tag, attr in (("a", "href"), ("form", "action"), ("link", "href"),
                       ("iframe", "src"), ("area", "href")):
         for el in soup.find_all(tag):

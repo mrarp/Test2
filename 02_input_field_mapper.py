@@ -23,6 +23,25 @@ from urllib.parse import urlparse, parse_qsl, urljoin
 import requests
 from bs4 import BeautifulSoup
 
+
+def _bs_parser():
+    """Берём lxml, если установлен, иначе встроенный html.parser (без доп. зависимостей)."""
+    for p in ("lxml", "html.parser"):
+        try:
+            BeautifulSoup("", p)
+            return p
+        except Exception:
+            continue
+    return "html.parser"
+
+
+BS_PARSER = _bs_parser()
+
+
+def make_soup(markup):
+    return BeautifulSoup(markup, BS_PARSER)
+
+
 try:
     import config
 except ImportError:
@@ -82,7 +101,7 @@ def from_forms(session, url):
     r = fetch(session, url)
     if not r or "html" not in r.headers.get("Content-Type", "") or r.status_code != 200:
         return targets
-    soup = BeautifulSoup(r.text, "lxml")
+    soup = make_soup(r.text)
     for form in soup.find_all("form"):
         action = urljoin(url, form.get("action") or url)
         method = (form.get("method") or "GET").upper()
